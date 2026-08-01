@@ -2,15 +2,15 @@
 
 Unraid-Plugin, das den Stromverbrauch einer FRITZ!Smart Energy Steckdose im
 Dashboard anzeigt. Die Daten kommen aus einer InfluxDB, die von einem
-Collector-Script befuellt wird.
+Collector-Script befüllt wird.
 
 ![Version](https://img.shields.io/badge/version-2026.08.01-blue)
 ![Unraid](https://img.shields.io/badge/unraid-%3E%3D6.12-orange)
 
 ## Was es zeigt
 
-- Aktuelle Leistung in Watt, farbcodiert nach frei waehlbaren Schwellen
-- Sparkline ueber den gewaehlten Zeitraum
+- Aktuelle Leistung in Watt, farbcodiert nach frei wählbaren Schwellen
+- Sparkline über den gewählten Zeitraum
 - Mittel-, Min- und Maximalwert
 - Temperatur der Steckdose
 - Hochrechnung auf kWh und Euro pro Jahr
@@ -29,9 +29,9 @@ In Unraid unter **Plugins → Install Plugin** folgende URL eintragen:
 https://raw.githubusercontent.com/ezek1el/fritz-unraid-power-monitor/main/fritz.power.monitor.plg
 ```
 
-Anschliessend unter **Settings → Stromverbrauch (FRITZ!)** konfigurieren.
-Der Button *Verbindung testen* prueft, ob InfluxDB antwortet und Daten
-fuer das angegebene Geraet vorliegen.
+Anschließend unter **Settings → Stromverbrauch (FRITZ!)** konfigurieren.
+Der Button *Verbindung testen* prüft, ob InfluxDB antwortet und Daten
+für das angegebene Gerät vorliegen.
 
 ## Datenformat
 
@@ -51,13 +51,13 @@ Konfiguration nach `/mnt/cache/appdata/fritzpower/config`:
 
 ```ini
 FB_HOST=192.168.178.1
-FB_USER=monitoring
-FB_PASS=geheim
+FB_USER=<username>
+FB_PASS=<password>
 INFLUX_URL=http://192.168.178.10:8086
 INFLUX_DB=fritzbox
 ```
 
-Rechte einschraenken, da das Passwort im Klartext steht:
+Rechte einschränken, da das Passwort im Klartext steht:
 
 ```bash
 chmod 600 /mnt/cache/appdata/fritzpower/config
@@ -78,8 +78,8 @@ python3 /mnt/cache/appdata/fritzpower/fritzpower.py
 
 ### Hinweis zum FRITZ!Box-Benutzer
 
-Fuer den Collector genuegt ein Benutzer mit der Berechtigung
-*Smart-Home-Geraete steuern*. Ein Konto mit Vollzugriff ist nicht noetig
+Für den Collector genügt ein Benutzer mit der Berechtigung
+*Smart-Home-Geräte steuern*. Ein Konto mit Vollzugriff ist nicht nötig
 und im Schadensfall deutlich unangenehmer.
 
 ## Entwicklung
