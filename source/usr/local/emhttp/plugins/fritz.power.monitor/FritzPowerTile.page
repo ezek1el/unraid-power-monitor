@@ -46,9 +46,27 @@ if (!$fpmConfigured):
 .fpm-cost { text-align: right; line-height: 1.4; white-space: nowrap; opacity: .85; }
 .fpm-cost b { font-size: 13px; }
 
-.fpm-spark { width: 100%; height: 34px; display: block; }
+.fpm-chart { position: relative; }
+.fpm-spark { width: 100%; height: 60px; display: block; }
 .fpm-spark path.area { fill: currentColor; opacity: .15; }
 .fpm-spark path.line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.fpm-spark line.grid { stroke: currentColor; opacity: .12; stroke-width: .5; }
+.fpm-spark line.axis { stroke: currentColor; opacity: .35; stroke-width: .7; }
+/* Achsenwerte liegen ueber dem Graphen, damit die Kachelhoehe gleich bleibt */
+.fpm-ax {
+    position: absolute;
+    font-size: 10px;
+    opacity: .6;
+    pointer-events: none;
+    white-space: nowrap;
+    background: rgba(0,0,0,.35);
+    padding: 0 2px;
+    border-radius: 2px;
+}
+.fpm-ax-max  { top: 0;      right: 0; }
+.fpm-ax-min  { bottom: 2px; right: 0; }
+.fpm-ax-t0   { bottom: 2px; left: 0; }
+.fpm-ax-span { top: 0;      left: 0; }
 
 .fpm-stats {
     display: flex;
@@ -60,8 +78,7 @@ if (!$fpmConfigured):
 
 .fpm-foot {
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    justify-content: flex-end;
     font-size: 11px;
     opacity: .5;
 }
@@ -85,21 +102,26 @@ if (!$fpmConfigured):
         </div>
     </div>
 
-    <svg class="fpm-spark" id="fpmSpark" preserveAspectRatio="none"
-         viewBox="0 0 300 34" aria-hidden="true">
-        <path class="area" d=""></path>
-        <path class="line" d=""></path>
-    </svg>
+    <div class="fpm-chart">
+        <svg class="fpm-spark" id="fpmSpark" preserveAspectRatio="none"
+             viewBox="0 0 300 60" aria-hidden="true">
+            <g id="fpmGrid"></g>
+            <path class="area" d=""></path>
+            <path class="line" d=""></path>
+            <line class="axis" x1="0" y1="59.6" x2="300" y2="59.6"></line>
+        </svg>
+        <span class="fpm-ax fpm-ax-span" id="fpmAxSpan"></span>
+        <span class="fpm-ax fpm-ax-max"  id="fpmAxMax"></span>
+        <span class="fpm-ax fpm-ax-min"  id="fpmAxMin"></span>
+        <span class="fpm-ax fpm-ax-t0"   id="fpmAxT0"></span>
+    </div>
 
     <div class="fpm-stats">
         <span><i>&oslash;</i><span id="fpmAvg">--</span> W</span>
-        <span><i>min</i><span id="fpmMin">--</span> W</span>
-        <span><i>max</i><span id="fpmMax">--</span> W</span>
         <span><i>temp</i><span id="fpmTemp">--</span>&deg;C</span>
     </div>
 
     <div class="fpm-foot">
-        <span id="fpmRange">&nbsp;</span>
         <span id="fpmAge">&nbsp;</span>
     </div>
 </div>
@@ -130,40 +152,81 @@ if (!$fpmConfigured):
         return 'vor ' + Math.round(s / 3600) + ' h';
     }
 
-    /* Baut Flaechen- und Linienpfad aus den Messpunkten. */
-    function sparkline(points) {
+    /* Rundet auf einen "huebschen" Skalenwert auf/ab. */
+    function niceStep(span) {
+        var raw = span / 3;
+        var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+        var n   = raw / mag;
+        var f   = n >= 5 ? 10 : n >= 2 ? 5 : n >= 1 ? 2 : 1;
+        return f * mag;
+    }
+
+    function hhmm(ts) {
+        var d = new Date(ts);
+        return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    }
+
+    /* Zeichnet Gitter, Flaeche und Linie; beschriftet die Achsen. */
+    function sparkline(points, hours) {
         var svg = $('fpmSpark');
         if (!svg) return;
         var area = svg.querySelector('path.area');
         var line = svg.querySelector('path.line');
+        var grid = $('fpmGrid');
 
         if (!points || points.length < 2) {
             area.setAttribute('d', '');
             line.setAttribute('d', '');
+            grid.innerHTML = '';
             return;
         }
 
-        var W = 300, H = 34, PAD = 2;
+        var W = 300, H = 60, PAD = 3;
         var xs = points.map(function (p) { return p.t; });
         var ys = points.map(function (p) { return p.w; });
 
         var xMin = Math.min.apply(null, xs), xMax = Math.max.apply(null, xs);
-        var yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
+        var yLo  = Math.min.apply(null, ys), yHi  = Math.max.apply(null, ys);
 
-        // Flache Kurven brauchen Luft, sonst klebt die Linie am Rand
-        if (yMax - yMin < 1) { yMax = yMin + 1; }
+        // Auf runde Werte erweitern, damit die Achse lesbare Zahlen zeigt
+        var step = niceStep(Math.max(1, yHi - yLo));
+        var yMin = Math.floor(yLo / step) * step;
+        var yMax = Math.ceil(yHi / step) * step;
+        if (yMax - yMin < step) { yMax = yMin + step; }
+
         var xSpan = (xMax - xMin) || 1;
         var ySpan = (yMax - yMin) || 1;
 
+        function px(t) { return ((t - xMin) / xSpan) * W; }
+        function py(w) { return H - PAD - ((w - yMin) / ySpan) * (H - PAD * 2); }
+
+        // Waagerechte Hilfslinien auf den Skalenwerten
+        var g = '';
+        for (var v = yMin; v <= yMax + 0.001; v += step) {
+            var y = py(v).toFixed(1);
+            g += '<line class="grid" x1="0" y1="' + y + '" x2="' + W + '" y2="' + y + '"></line>';
+        }
+        // Senkrechte Marken, viertelweise ueber den Zeitraum
+        for (var i = 1; i < 4; i++) {
+            var x = (W * i / 4).toFixed(1);
+            g += '<line class="grid" x1="' + x + '" y1="0" x2="' + x + '" y2="' + H + '"></line>';
+        }
+        grid.innerHTML = g;
+
         var d = '';
         points.forEach(function (p, i) {
-            var x = ((p.t - xMin) / xSpan) * W;
-            var y = H - PAD - ((p.w - yMin) / ySpan) * (H - PAD * 2);
-            d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+            d += (i === 0 ? 'M' : 'L') + px(p.t).toFixed(1) + ',' + py(p.w).toFixed(1);
         });
 
         line.setAttribute('d', d);
         area.setAttribute('d', d + 'L' + W + ',' + H + 'L0,' + H + 'Z');
+
+        // Achsenbeschriftung
+        var dec = step < 1 ? 1 : 0;
+        $('fpmAxMax').textContent  = yMax.toFixed(dec) + ' W';
+        $('fpmAxMin').textContent  = yMin.toFixed(dec) + ' W';
+        $('fpmAxT0').textContent   = hhmm(xMin);
+        $('fpmAxSpan').textContent = hours + ' h';
     }
 
     function level(watt) {
@@ -188,14 +251,11 @@ if (!$fpmConfigured):
         $('fpmEur').textContent   = fmt(d.eur_year, 2);
         $('fpmKwh').textContent   = fmt(d.kwh_year, 0);
         $('fpmAvg').textContent   = fmt(d.avg);
-        $('fpmMin').textContent   = fmt(d.min);
-        $('fpmMax').textContent   = fmt(d.max);
         $('fpmTemp').textContent  = fmt(d.celsius);
-        $('fpmRange').textContent = 'letzte ' + d.hours + ' h';
         $('fpmAge').textContent   = relAge(d.ts);
 
         level(d.watt);
-        sparkline(d.series);
+        sparkline(d.series, d.hours);
     }
 
     function poll() {
