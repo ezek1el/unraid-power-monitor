@@ -4,7 +4,7 @@
 <!ENTITY author    "ezek1el3000">
 <!ENTITY version   "2026.08.01">
 <!ENTITY launch    "Settings/FritzPowerSettings">
-<!ENTITY gitURL    "https://raw.githubusercontent.com/ezek1el3000/fritz-unraid-power-monitor/main">
+<!ENTITY gitURL    "https://raw.githubusercontent.com/ezek1el/fritz-unraid-power-monitor/main">
 <!ENTITY pluginURL "&gitURL;/&name;.plg">
 <!ENTITY pkgURL    "&gitURL;/packages">
 <!ENTITY plgPATH   "/boot/config/plugins/&name;">
@@ -17,7 +17,7 @@
         launch="&launch;"
         pluginURL="&pluginURL;"
         min="6.12.0"
-        support="https://github.com/ezek1el3000/fritz-unraid-power-monitor/issues"
+        support="https://github.com/ezek1el/fritz-unraid-power-monitor/issues"
         icon="bolt">
 
 <CHANGES>

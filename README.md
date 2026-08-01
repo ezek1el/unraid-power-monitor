@@ -26,7 +26,7 @@ Collector-Script befuellt wird.
 In Unraid unter **Plugins → Install Plugin** folgende URL eintragen:
 
 ```
-https://raw.githubusercontent.com/ezek1el3000/fritz-unraid-power-monitor/main/fritz.power.monitor.plg
+https://raw.githubusercontent.com/ezek1el/fritz-unraid-power-monitor/main/fritz.power.monitor.plg
 ```
 
 Anschliessend unter **Settings → Stromverbrauch (FRITZ!)** konfigurieren.
