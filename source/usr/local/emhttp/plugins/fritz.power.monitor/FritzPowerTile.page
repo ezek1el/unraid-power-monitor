@@ -1,70 +1,60 @@
-Menu="Dashboard:1"
-Title="Stromverbrauch"
-Icon="icon-u-power"
-Tag="bolt"
-Cond="is_file('/boot/config/plugins/fritz.power.monitor/settings.cfg')"
+Menu="Dashboard:0"
+Cond="version_compare(parse_ini_file('/etc/unraid-version')['version'],'6.11.9','>')"
 ---
-<?PHP
+<?php
 /*
  * fritz-unraid-power-monitor - Dashboard-Tile
+ * Registriert sich ueber $mytiles, damit die Kachel im Tile Management
+ * auftaucht und per Drag&Drop sortierbar ist.
  */
-$fpmVersion = '0.1.0';
 
 $fpmCfgFile = '/boot/config/plugins/fritz.power.monitor/settings.cfg';
 $fpmCfg = is_file($fpmCfgFile) ? (@parse_ini_file($fpmCfgFile) ?: []) : [];
 $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
-?>
 
+$fpmConfigured = !empty($fpmCfg['INFLUX_URL']) && !empty($fpmCfg['DEVICE']);
+
+ob_start();
+
+if (!$fpmConfigured):
+?>
+<div style="padding:6px 2px;font-size:12px;">
+  Bitte <a href="/Settings/FritzPowerSettings">Einstellungen konfigurieren</a>
+</div>
+<?php else: ?>
 <style>
 .fpm-wrap {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 4px 2px;
-    font-size: 1.2rem;
+    gap: 6px;
+    font-size: 12px;
 }
 .fpm-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 10px;
 }
 .fpm-now {
-    font-size: 2.6rem;
+    font-size: 22px;
     font-weight: 600;
-    line-height: 1;
+    line-height: 1.1;
     white-space: nowrap;
 }
-.fpm-now small {
-    font-size: 1.3rem;
-    font-weight: 400;
-    opacity: .7;
-    margin-left: 3px;
-}
-.fpm-cost {
-    text-align: right;
-    line-height: 1.35;
-    white-space: nowrap;
-}
-.fpm-cost b { font-size: 1.5rem; }
-.fpm-cost span { opacity: .65; font-size: 1.05rem; }
+.fpm-now small { font-size: 12px; font-weight: 400; opacity: .7; margin-left: 2px; }
 
-.fpm-spark {
-    width: 100%;
-    height: 46px;
-    display: block;
-}
-.fpm-spark path.area { fill: currentColor; opacity: .16; }
-.fpm-spark path.line { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.fpm-cost { text-align: right; line-height: 1.4; white-space: nowrap; opacity: .85; }
+.fpm-cost b { font-size: 13px; }
+
+.fpm-spark { width: 100%; height: 34px; display: block; }
+.fpm-spark path.area { fill: currentColor; opacity: .15; }
+.fpm-spark path.line { fill: none; stroke: currentColor; stroke-width: 1.5; }
 
 .fpm-stats {
     display: flex;
-    justify-content: space-between;
-    gap: 6px;
+    gap: 14px;
     flex-wrap: wrap;
-    font-size: 1.05rem;
-    opacity: .8;
+    opacity: .75;
 }
 .fpm-stats i { font-style: normal; opacity: .6; margin-right: 3px; }
 
@@ -72,21 +62,17 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    font-size: .95rem;
-    opacity: .55;
+    font-size: 11px;
+    opacity: .5;
 }
-.fpm-err {
-    padding: 6px 2px;
-    font-size: 1.1rem;
-    color: #e0605e;
-}
-/* Ampel nach Verbrauch - Schwellen kommen aus den Einstellungen */
+.fpm-err { padding: 4px 2px; color: #e0605e; }
+
 .fpm-lvl-ok   { color: #4ea24e; }
 .fpm-lvl-warn { color: #d8a013; }
 .fpm-lvl-high { color: #e0605e; }
 </style>
 
-<div class="fpm-wrap" id="fpmWrap">
+<div class="fpm-wrap">
     <div class="fpm-err" id="fpmErr" style="display:none"></div>
 
     <div class="fpm-head">
@@ -94,22 +80,22 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
             <span id="fpmWatt">--</span><small>W</small>
         </div>
         <div class="fpm-cost">
-            <b id="fpmEur">--</b> <span>&euro;/Jahr</span><br>
-            <span id="fpmKwh">--</span> <span>kWh/Jahr</span>
+            <b id="fpmEur">--</b> &euro;/Jahr<br>
+            <span id="fpmKwh">--</span> kWh/Jahr
         </div>
     </div>
 
     <svg class="fpm-spark" id="fpmSpark" preserveAspectRatio="none"
-         viewBox="0 0 300 46" aria-hidden="true">
+         viewBox="0 0 300 34" aria-hidden="true">
         <path class="area" d=""></path>
         <path class="line" d=""></path>
     </svg>
 
     <div class="fpm-stats">
-        <div><i>&oslash;</i><span id="fpmAvg">--</span> W</div>
-        <div><i>min</i><span id="fpmMin">--</span> W</div>
-        <div><i>max</i><span id="fpmMax">--</span> W</div>
-        <div><i>temp</i><span id="fpmTemp">--</span> &deg;C</div>
+        <span><i>&oslash;</i><span id="fpmAvg">--</span> W</span>
+        <span><i>min</i><span id="fpmMin">--</span> W</span>
+        <span><i>max</i><span id="fpmMax">--</span> W</span>
+        <span><i>temp</i><span id="fpmTemp">--</span>&deg;C</span>
     </div>
 
     <div class="fpm-foot">
@@ -122,10 +108,10 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
 (function () {
     'use strict';
 
-    var API      = '/plugins/fritz.power.monitor/include/api.php';
-    var REFRESH  = <?= (int)(($fpmCfg['REFRESH'] ?? 30)) ?: 30 ?> * 1000;
-    var WARN     = <?= (float)(($fpmCfg['WARN_WATT'] ?? 60)) ?: 60 ?>;
-    var HIGH     = <?= (float)(($fpmCfg['HIGH_WATT'] ?? 100)) ?: 100 ?>;
+    var API     = '/plugins/fritz.power.monitor/include/api.php';
+    var REFRESH = <?= (int)($fpmCfg['REFRESH'] ?? 30) ?: 30 ?> * 1000;
+    var WARN    = <?= (float)($fpmCfg['WARN_WATT'] ?? 60) ?: 60 ?>;
+    var HIGH    = <?= (float)($fpmCfg['HIGH_WATT'] ?? 100) ?: 100 ?>;
 
     var timer = null;
 
@@ -146,7 +132,8 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
 
     /* Baut Flaechen- und Linienpfad aus den Messpunkten. */
     function sparkline(points) {
-        var svg  = $('fpmSpark');
+        var svg = $('fpmSpark');
+        if (!svg) return;
         var area = svg.querySelector('path.area');
         var line = svg.querySelector('path.line');
 
@@ -156,14 +143,14 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
             return;
         }
 
-        var W = 300, H = 46, PAD = 2;
+        var W = 300, H = 34, PAD = 2;
         var xs = points.map(function (p) { return p.t; });
         var ys = points.map(function (p) { return p.w; });
 
         var xMin = Math.min.apply(null, xs), xMax = Math.max.apply(null, xs);
         var yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
 
-        // Flache Kurven brauchen etwas Luft, sonst klebt die Linie am Rand
+        // Flache Kurven brauchen Luft, sonst klebt die Linie am Rand
         if (yMax - yMin < 1) { yMax = yMin + 1; }
         var xSpan = (xMax - xMin) || 1;
         var ySpan = (yMax - yMin) || 1;
@@ -181,6 +168,7 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
 
     function level(watt) {
         var el = $('fpmLvl');
+        if (!el) return;
         el.classList.remove('fpm-lvl-ok', 'fpm-lvl-warn', 'fpm-lvl-high');
         el.classList.add(watt >= HIGH ? 'fpm-lvl-high'
                        : watt >= WARN ? 'fpm-lvl-warn'
@@ -188,20 +176,21 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
     }
 
     function showError(msg) {
-        $('fpmErr').style.display = '';
-        $('fpmErr').textContent = msg;
+        var el = $('fpmErr');
+        if (!el) return;
+        el.style.display = '';
+        el.textContent = msg;
     }
 
     function render(d) {
         $('fpmErr').style.display = 'none';
-
-        $('fpmWatt').textContent = fmt(d.watt);
-        $('fpmEur').textContent  = fmt(d.eur_year, 2);
-        $('fpmKwh').textContent  = fmt(d.kwh_year, 0);
-        $('fpmAvg').textContent  = fmt(d.avg);
-        $('fpmMin').textContent  = fmt(d.min);
-        $('fpmMax').textContent  = fmt(d.max);
-        $('fpmTemp').textContent = fmt(d.celsius);
+        $('fpmWatt').textContent  = fmt(d.watt);
+        $('fpmEur').textContent   = fmt(d.eur_year, 2);
+        $('fpmKwh').textContent   = fmt(d.kwh_year, 0);
+        $('fpmAvg').textContent   = fmt(d.avg);
+        $('fpmMin').textContent   = fmt(d.min);
+        $('fpmMax').textContent   = fmt(d.max);
+        $('fpmTemp').textContent  = fmt(d.celsius);
         $('fpmRange').textContent = 'letzte ' + d.hours + ' h';
         $('fpmAge').textContent   = relAge(d.ts);
 
@@ -210,15 +199,14 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
     }
 
     function poll() {
+        if (!$('fpmWatt')) return;   // Kachel ausgeblendet
         fetch(API + '?_=' + Date.now(), { cache: 'no-store' })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (d && d.ok) { render(d); }
                 else { showError(d && d.error ? d.error : 'Unbekannter Fehler'); }
             })
-            .catch(function (e) {
-                showError('Abfrage fehlgeschlagen: ' + e.message);
-            });
+            .catch(function (e) { showError('Abfrage fehlgeschlagen: ' + e.message); });
     }
 
     function start() {
@@ -227,7 +215,7 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
         timer = setInterval(poll, REFRESH);
     }
 
-    // Im Hintergrund nicht pollen - spart Requests, wenn der Tab nicht sichtbar ist
+    // Im Hintergrund nicht pollen - spart Requests bei unsichtbarem Tab
     document.addEventListener('visibilitychange', function () {
         if (document.hidden) { clearInterval(timer); timer = null; }
         else if (!timer) { start(); }
@@ -240,3 +228,28 @@ $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
     }
 })();
 </script>
+<?php endif; ?>
+<?php
+$fpm_content = ob_get_clean();
+$pluginname  = "fritz-power-monitor";
+
+$mytiles[$pluginname]['column2'] =
+'<tbody title="Stromverbrauch">
+<tr><td>'
+. '<div style="display:flex;align-items:flex-start;gap:9px;font-weight:normal;">'
+.   '<i class="fa fa-bolt" style="font-size:26px;width:32px;text-align:center;flex-shrink:0;line-height:32px;"></i>'
+.   '<div style="flex:1;min-width:0;">'
+.     '<div style="font-weight:bold;line-height:32px;">'
+.       'Stromverbrauch'
+.       '<span style="float:right;font-weight:normal;display:inline-flex;align-items:center;gap:8px;line-height:normal;">'
+.         '<a href="/Settings/FritzPowerSettings" title="Einstellungen">'
+.           '<i class="fa fa-fw fa-cog control" style="cursor:pointer;"></i>'
+.         '</a>'
+.       '</span>'
+.     '</div>'
+.     $fpm_content
+.   '</div>'
+. '</div>'
+. '</td></tr>
+</tbody>';
+?>
