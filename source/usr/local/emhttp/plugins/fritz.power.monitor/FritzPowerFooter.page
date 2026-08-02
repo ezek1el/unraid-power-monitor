@@ -1,0 +1,142 @@
+Menu="Buttons:2"
+Link="nav-user"
+---
+<?php
+/*
+ * fritz-unraid-power-monitor - Eintrag in der Statusleiste
+ * Zeigt Blitz-Icon plus aktuellen Verbrauch neben Temperatur und Luefterdrehzahl.
+ *
+ * Der Eintrag wird einmalig hinter Temperatur/Luefter eingehaengt und danach
+ * nur noch aktualisiert. showFooter() waere ungeeignet, weil es prepend nutzt
+ * und die Position dadurch vom letzten Aufrufer abhaengt.
+ */
+
+$fpmCfgFile = '/boot/config/plugins/fritz.power.monitor/settings.cfg';
+$fpmCfg = is_file($fpmCfgFile) ? (@parse_ini_file($fpmCfgFile) ?: []) : [];
+$fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
+
+// Ohne Konfiguration keinen leeren Platzhalter anzeigen
+if (empty($fpmCfg['INFLUX_URL']) || empty($fpmCfg['DEVICE'])) return;
+?>
+<script>
+(function () {
+    'use strict';
+
+    var FPM_API  = '/plugins/fritz.power.monitor/include/api.php';
+    var FPM_WARN = <?= (float)($fpmCfg['WARN_WATT'] ?? 60) ?: 60 ?>;
+    var FPM_HIGH = <?= (float)($fpmCfg['HIGH_WATT'] ?? 100) ?: 100 ?>;
+
+    // Fusszeile ist auf jeder Seite sichtbar - gemaechliches Intervall genuegt
+    var FPM_INTERVAL = 60000;
+
+    /* "steckdose_mani_schreibtisch" -> "Steckdose Mani Schreibtisch" */
+    function prettyName(slug) {
+        if (!slug) return '';
+        return slug.split('_').filter(Boolean).map(function (w) {
+            return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join(' ');
+    }
+
+    function num(v, digits) {
+        return (v === null || v === undefined) ? '?' : Number(v).toFixed(digits);
+    }
+
+    function buildTooltip(d) {
+        var lines = [prettyName(d.device)];
+
+        lines.push('Aktuell: ' + num(d.watt, 1) + ' W');
+
+        if (d.avg !== null && d.avg !== undefined) {
+            lines.push('Mittel (' + d.hours + ' h): ' + num(d.avg, 1) + ' W'
+                       + '   Min ' + num(d.min, 1) + ' W'
+                       + '   Max ' + num(d.max, 1) + ' W');
+        }
+
+        lines.push('Hochrechnung: ' + num(d.kwh_year, 0) + ' kWh/Jahr'
+                   + '  \u2248 ' + num(d.eur_year, 2) + ' \u20AC'
+                   + ' (' + (d.price * 100).toFixed(2).replace('.', ',') + ' ct/kWh)');
+
+        if (d.celsius !== null && d.celsius !== undefined) {
+            lines.push('Temperatur Steckdose: ' + num(d.celsius, 1) + ' \u00B0C');
+        }
+
+        return lines.join('\n');
+    }
+
+    /*
+     * showFooter() macht prepend auf #copyright - die Position haengt also davon
+     * ab, wer zuletzt aufgerufen hat. Damit der Wert stehen bleibt, haengen wir
+     * den Eintrag einmalig selbst ein und aktualisieren danach nur den Inhalt.
+     */
+    function ensureSlot() {
+        var el = document.getElementById('fpmpower');
+        if (el) return el;
+
+        var footer = document.getElementById('copyright');
+        if (!footer) return null;
+
+        el = document.createElement('span');
+        el.id = 'fpmpower';
+
+        /*
+         * Direkt hinter den Temperatur-/Luefterblock (#temp) einhaengen.
+         * Der bringt margin-right:24px mit, deshalb hier kein zusaetzlicher
+         * Abstand links - der Container-Gap von 1rem faellt weg, weil wir
+         * unmittelbar folgen.
+         */
+        var temp = document.getElementById('temp');
+
+        if (temp && temp.parentNode === footer) {
+            el.style.marginLeft = '-1rem';   // Container-Gap ausgleichen
+            footer.insertBefore(el, temp.nextSibling);
+            return el;
+        }
+
+        // Fallback: vor den Copyright-Text, falls #temp fehlt
+        var anchor = null;
+        var kids = footer.children;
+        for (var i = 0; i < kids.length; i++) {
+            var t = (kids[i].textContent || '');
+            if (kids[i].tagName === 'SPAN' && t.indexOf('Lime Technology') >= 0) {
+                anchor = kids[i];
+                break;
+            }
+        }
+
+        if (anchor) {
+            footer.insertBefore(el, anchor);
+        } else {
+            footer.appendChild(el);
+        }
+        return el;
+    }
+
+    function fpmFooter() {
+        $.get(FPM_API + '?_=' + Date.now())
+            .done(function (d) {
+                if (typeof d === 'string') {
+                    try { d = JSON.parse(d); } catch (e) { d = null; }
+                }
+                if (!d || !d.ok) { return; }
+
+                var el = ensureSlot();
+                if (!el) { return; }
+
+                var w     = Number(d.watt);
+                var color = w >= FPM_HIGH ? 'red-text'
+                          : w >= FPM_WARN ? 'orange-text'
+                          : '';
+
+                el.title = buildTooltip(d);
+                el.innerHTML = "<i class='fa fa-bolt' style='margin-right:4px'></i>"
+                             + "<span class='" + color + "'>" + w.toFixed(1) + " W</span>";
+            })
+            .always(function () {
+                timers.fpmPower = setTimeout(fpmFooter, FPM_INTERVAL);
+            });
+    }
+
+    // Kurz warten, bis Temperatur und Luefter ihre Eintraege angelegt haben
+    setTimeout(fpmFooter, 3000);
+})();
+</script>
