@@ -137,6 +137,6 @@ if (empty($fpmCfg['INFLUX_URL']) || empty($fpmCfg['DEVICE'])) return;
     }
 
     // Kurz warten, bis Temperatur und Luefter ihre Eintraege angelegt haben
-    setTimeout(fpmFooter, 3000);
+    setTimeout(fpmFooter, 300);
 })();
 </script>
