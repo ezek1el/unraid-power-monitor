@@ -3,7 +3,7 @@ Link="nav-user"
 ---
 <?php
 /*
- * fritz-unraid-power-monitor - Eintrag in der Statusleiste
+ * unraid-power-monitor - Eintrag in der Statusleiste
  * Zeigt Blitz-Icon plus aktuellen Verbrauch neben Temperatur und Luefterdrehzahl.
  *
  * Der Eintrag wird einmalig hinter Temperatur/Luefter eingehaengt und danach
@@ -11,7 +11,7 @@ Link="nav-user"
  * und die Position dadurch vom letzten Aufrufer abhaengt.
  */
 
-$fpmCfgFile = '/boot/config/plugins/fritz.power.monitor/settings.cfg';
+$fpmCfgFile = '/boot/config/plugins/unraid-power-monitor/settings.cfg';
 $fpmCfg = is_file($fpmCfgFile) ? (@parse_ini_file($fpmCfgFile) ?: []) : [];
 $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
 
@@ -22,7 +22,7 @@ if (empty($fpmCfg['INFLUX_URL']) || empty($fpmCfg['DEVICE'])) return;
 (function () {
     'use strict';
 
-    var FPM_API  = '/plugins/fritz.power.monitor/include/api.php';
+    var FPM_API  = '/plugins/unraid-power-monitor/include/api.php';
     var FPM_WARN = <?= (float)($fpmCfg['WARN_WATT'] ?? 60) ?: 60 ?>;
     var FPM_HIGH = <?= (float)($fpmCfg['HIGH_WATT'] ?? 100) ?: 100 ?>;
 

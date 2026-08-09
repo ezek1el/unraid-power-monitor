@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-NAME="fritz.power.monitor"
+NAME="unraid-power-monitor"
 VERSION="${1:-$(date +%Y.%m.%d)}"
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/source"
@@ -46,4 +46,4 @@ echo ""
 echo "Naechste Schritte:"
 echo "  git add -A && git commit -m \"Release $VERSION\" && git push"
 echo "  Danach in Unraid installierbar ueber:"
-echo "  https://raw.githubusercontent.com/ezek1el/fritz-unraid-power-monitor/main/${NAME}.plg"
+echo "  https://raw.githubusercontent.com/ezek1el/unraid-power-monitor/main/${NAME}.plg"

@@ -1,4 +1,4 @@
-# fritz-unraid-power-monitor
+# Unraid Power Monitor
 
 Unraid-Plugin, das den Stromverbrauch einer FRITZ!Smart Energy Steckdose im
 Dashboard anzeigt. Die Daten kommen aus einer InfluxDB, die von einem
@@ -26,10 +26,10 @@ Collector-Script befüllt wird.
 In Unraid unter **Plugins → Install Plugin** folgende URL eintragen:
 
 ```
-https://raw.githubusercontent.com/ezek1el/fritz-unraid-power-monitor/main/fritz.power.monitor.plg
+https://raw.githubusercontent.com/ezek1el/unraid-power-monitor/main/unraid-power-monitor.plg
 ```
 
-Anschließend unter **Settings → Stromverbrauch (FRITZ!)** konfigurieren.
+Anschließend unter **Settings → Power Monitor** konfigurieren.
 Der Button *Verbindung testen* prüft, ob InfluxDB antwortet und Daten
 für das angegebene Gerät vorliegen.
 
@@ -89,7 +89,7 @@ und im Schadensfall deutlich unangenehmer.
 ./build.sh 2026.08.15   # explizite Version
 ```
 
-Das Script erzeugt `packages/fritz.power.monitor-<version>.txz` und zieht
+Das Script erzeugt `packages/unraid-power-monitor-<version>.txz` und zieht
 die Version in der `.plg` nach.
 
 ## Lizenz

@@ -1,6 +1,6 @@
 <?PHP
 /*
- * fritz-unraid-power-monitor - API-Backend
+ * unraid-power-monitor - API-Backend
  * Fragt InfluxDB ab und liefert JSON fuer das Dashboard-Tile.
  *
  * GET-basiert, weil Unraid 7.x/nginx bei POST auf Plugin-Endpunkte zickt.
@@ -9,7 +9,7 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate');
 
-$cfgFile = '/boot/config/plugins/fritz.power.monitor/settings.cfg';
+$cfgFile = '/boot/config/plugins/unraid-power-monitor/settings.cfg';
 
 $defaults = [
     'INFLUX_URL'   => 'http://192.168.88.100:8086',

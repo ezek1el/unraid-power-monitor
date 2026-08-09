@@ -1,13 +1,13 @@
 Menu="Utilities"
 Type="xmenu"
-Title="Stromverbrauch (FRITZ!)"
-Icon="icon-u-power"
+Title="Power Monitor"
+Icon="bolt"
 ---
 <?PHP
 /*
- * fritz-unraid-power-monitor - Einstellungen
+ * unraid-power-monitor - Einstellungen
  */
-$cfgDir  = '/boot/config/plugins/fritz.power.monitor';
+$cfgDir  = '/boot/config/plugins/unraid-power-monitor';
 $cfgFile = "$cfgDir/settings.cfg";
 
 $defaults = [
@@ -34,7 +34,7 @@ if (is_file($cfgFile)) {
 
 <form markdown="1" name="fpm_settings" method="POST"
       action="/update.php" target="progressFrame">
-<input type="hidden" name="#file" value="fritz.power.monitor/settings.cfg">
+<input type="hidden" name="#file" value="unraid-power-monitor/settings.cfg">
 
 InfluxDB-URL:
 : <input type="text" name="INFLUX_URL" value="<?= htmlspecialchars($cfg['INFLUX_URL']) ?>" style="width:280px">
@@ -103,7 +103,7 @@ function fpmTest() {
     var out = document.getElementById('fpmTestOut');
     out.innerHTML = '<em>Teste Verbindung &hellip;</em>';
 
-    fetch('/plugins/fritz.power.monitor/include/api.php?_=' + Date.now(),
+    fetch('/plugins/unraid-power-monitor/include/api.php?_=' + Date.now(),
           { cache: 'no-store' })
         .then(function (r) { return r.json(); })
         .then(function (d) {

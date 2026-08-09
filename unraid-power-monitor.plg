@@ -1,10 +1,10 @@
 <?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
-<!ENTITY name      "fritz.power.monitor">
+<!ENTITY name      "unraid-power-monitor">
 <!ENTITY author    "ezek1el3000">
-<!ENTITY version   "2026.08.02">
-<!ENTITY launch    "Settings/FritzPowerSettings">
-<!ENTITY gitURL    "https://raw.githubusercontent.com/ezek1el/fritz-unraid-power-monitor/main">
+<!ENTITY version   "2026.08.09">
+<!ENTITY launch    "Settings/PowerSettings">
+<!ENTITY gitURL    "https://raw.githubusercontent.com/ezek1el/unraid-power-monitor/main">
 <!ENTITY pluginURL "&gitURL;/&name;.plg">
 <!ENTITY pkgURL    "&gitURL;/packages">
 <!ENTITY plgPATH   "/boot/config/plugins/&name;">
@@ -17,7 +17,7 @@
         launch="&launch;"
         pluginURL="&pluginURL;"
         min="6.12.0"
-        support="https://github.com/ezek1el/fritz-unraid-power-monitor/issues"
+        support="https://github.com/ezek1el/unraid-power-monitor/issues"
         icon="bolt">
 
 <CHANGES>
@@ -62,7 +62,7 @@ fi
 echo ""
 echo "----------------------------------------------------"
 echo " &name; &version; installiert."
-echo " Einstellungen: Settings -> Stromverbrauch (FRITZ!)"
+echo " Einstellungen: Settings -> Power Monitor"
 echo "----------------------------------------------------"
 echo ""
 </INLINE>

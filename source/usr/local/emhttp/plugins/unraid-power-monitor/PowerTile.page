@@ -3,12 +3,12 @@ Cond="version_compare(parse_ini_file('/etc/unraid-version')['version'],'6.11.9',
 ---
 <?php
 /*
- * fritz-unraid-power-monitor - Dashboard-Tile
+ * unraid-power-monitor - Dashboard-Tile
  * Registriert sich ueber $mytiles, damit die Kachel im Tile Management
  * auftaucht und per Drag&Drop sortierbar ist.
  */
 
-$fpmCfgFile = '/boot/config/plugins/fritz.power.monitor/settings.cfg';
+$fpmCfgFile = '/boot/config/plugins/unraid-power-monitor/settings.cfg';
 $fpmCfg = is_file($fpmCfgFile) ? (@parse_ini_file($fpmCfgFile) ?: []) : [];
 $fpmCfg = array_change_key_case($fpmCfg, CASE_UPPER);
 
@@ -19,7 +19,7 @@ ob_start();
 if (!$fpmConfigured):
 ?>
 <div style="padding:6px 2px;font-size:12px;">
-  Bitte <a href="/Settings/FritzPowerSettings">Einstellungen konfigurieren</a>
+  Bitte <a href="/Settings/PowerSettings">Einstellungen konfigurieren</a>
 </div>
 <?php else: ?>
 <style>
@@ -130,7 +130,7 @@ if (!$fpmConfigured):
 (function () {
     'use strict';
 
-    var API     = '/plugins/fritz.power.monitor/include/api.php';
+    var API     = '/plugins/unraid-power-monitor/include/api.php';
     var REFRESH = <?= (int)($fpmCfg['REFRESH'] ?? 30) ?: 30 ?> * 1000;
     var WARN    = <?= (float)($fpmCfg['WARN_WATT'] ?? 60) ?: 60 ?>;
     var HIGH    = <?= (float)($fpmCfg['HIGH_WATT'] ?? 100) ?: 100 ?>;
@@ -291,7 +291,7 @@ if (!$fpmConfigured):
 <?php endif; ?>
 <?php
 $fpm_content = ob_get_clean();
-$pluginname  = "fritz-power-monitor";
+$pluginname  = "unraid-power-monitor";
 
 $mytiles[$pluginname]['column2'] =
 '<tbody title="Stromverbrauch">
@@ -302,7 +302,7 @@ $mytiles[$pluginname]['column2'] =
 .     '<div style="font-weight:bold;line-height:32px;">'
 .       'Stromverbrauch'
 .       '<span style="float:right;font-weight:normal;display:inline-flex;align-items:center;gap:8px;line-height:normal;">'
-.         '<a href="/Settings/FritzPowerSettings" title="Einstellungen">'
+.         '<a href="/Settings/PowerSettings" title="Einstellungen">'
 .           '<i class="fa fa-fw fa-cog control" style="cursor:pointer;"></i>'
 .         '</a>'
 .       '</span>'
