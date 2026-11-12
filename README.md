@@ -79,18 +79,7 @@ python3 /mnt/cache/appdata/fritzpower/fritzpower.py
 ### Hinweis zum FRITZ!Box-Benutzer
 
 Für den Collector genügt ein Benutzer mit der Berechtigung
-*Smart-Home-Geräte steuern*. Ein Konto mit Vollzugriff ist nicht nötig
-und im Schadensfall deutlich unangenehmer.
-
-## Entwicklung
-
-```bash
-./build.sh              # Version = aktuelles Datum
-./build.sh 2026.08.15   # explizite Version
-```
-
-Das Script erzeugt `packages/unraid-power-monitor-<version>.txz` und zieht
-die Version in der `.plg` nach.
+*Smart-Home-Geräte steuern*. Ein Konto mit Vollzugriff ist nicht nötig.
 
 ## Lizenz
 
